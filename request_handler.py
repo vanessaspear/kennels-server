@@ -4,6 +4,7 @@ from views import get_all_animals, get_single_animal, create_animal, delete_anim
 from views import get_all_locations, get_single_location, create_location, delete_location, update_location
 from views import get_all_employees, get_single_employee, create_employee, delete_employee, update_employee
 from views import get_all_customers, get_single_customer, create_customer, delete_customer, update_customer
+from views import verify_data
 
 
 # Here's a class. It inherits from another class.
@@ -52,7 +53,6 @@ class HandleRequests(BaseHTTPRequestHandler):
     def do_GET(self):
         """Handles GET requests to the server
         """
-        self._set_headers(200)
         response = {}  # Default response
 
         # Parse the URL and capture the tuple that is returned
@@ -86,6 +86,14 @@ class HandleRequests(BaseHTTPRequestHandler):
             else:
                 response = get_all_customers()
 
+        # Set status code to 200 OK if response is valid
+        if response:
+            self._set_headers(200)
+        # Set status code to 404 - Not Found if the client requests a nonexistent resource
+        else:
+            self._set_headers(404)
+            response = { "message": f"{id} can not be found.  Please enter a valid resource id." }
+
         self.wfile.write(json.dumps(response).encode())
 
     # Here's a method on the class that overrides the parent's method.
@@ -107,39 +115,71 @@ class HandleRequests(BaseHTTPRequestHandler):
         # the orange squiggle, you'll define the create_animal
         # function next.
         if resource == "animals":
-            # Initialize new animal
-            new_animal = None
-            new_animal = create_animal(post_body)
+            # Verify post properties match resource properties
+            verified_data = verify_data(resource, post_body)
+            
+            if verified_data is True:
+                # Initialize new animal
+                new_animal = None
+                new_animal = create_animal(post_body)
 
-            # Encode the new animal and send in response
-            self.wfile.write(json.dumps(new_animal).encode())
+                # Encode the new animal and send in response
+                self.wfile.write(json.dumps(new_animal).encode())
+            else:
+                self._set_headers(400)
+                # Encode the new animal and send in response
+                self.wfile.write(json.dumps(verified_data).encode())
 
         #Add a new location to the list
         if resource == "locations":
-            # Initialize new location
-            new_location = None
-            new_location = create_location(post_body)
+            # Verify post properties match resource properties
+            verified_data = verify_data(resource, post_body)
 
-            # Encode the new location and send in response
-            self.wfile.write(json.dumps(new_location).encode())
+            if verified_data is True:
+                # Initialize new location
+                new_location = None
+                new_location = create_location(post_body)
+
+                # Encode the new location and send in response
+                self.wfile.write(json.dumps(new_location).encode())
+            else: 
+                self._set_headers(400)
+                # Encode the new location and send in response
+                self.wfile.write(json.dumps(verified_data).encode())
 
         #Add a new employee to the list
         if resource == "employees":
-            # Initialize new employee
-            new_employee = None
-            new_employee = create_employee(post_body)
+            # Verify post properties match resource properties
+            verified_data = verify_data(resource, post_body)
+            
+            if verified_data is True:
+                # Initialize new employee
+                new_employee = None
+                new_employee = create_employee(post_body)
 
-            # Encode the new employee and send in response
-            self.wfile.write(json.dumps(new_employee).encode())
+                # Encode the new employee and send in response
+                self.wfile.write(json.dumps(new_employee).encode())
+            else:
+                self._set_headers(400)
+                # Encode the new employee and send in response
+                self.wfile.write(json.dumps(verified_data).encode())
 
         #Add a new customer to the list
         if resource == "customers":
-            # Initialize new customer
-            new_customer = None
-            new_customer = create_customer(post_body)
+            # Verify post properties match resource properties
+            verified_data = verify_data(resource, post_body)
+            
+            if verified_data is True:
+                # Initialize new customer
+                new_customer = None
+                new_customer = create_customer(post_body)
 
-            # Encode the new customer and send in response
-            self.wfile.write(json.dumps(new_customer).encode())
+                # Encode the new customer and send in response
+                self.wfile.write(json.dumps(new_customer).encode())
+            else: 
+                self._set_headers(400)
+                # Encode the new customer and send in response
+                self.wfile.write(json.dumps(verified_data).encode())
 
     # A method that handles any PUT request.
     def do_PUT(self):

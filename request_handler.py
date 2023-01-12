@@ -6,6 +6,26 @@ from views import get_all_employees, get_single_employee, create_employee, delet
 from views import get_all_customers, get_single_customer, create_customer, update_customer
 from views import verify_data
 
+# Method mapper for all resources
+method_mapper = {
+    "animals": {
+        "single": get_single_animal,
+        "all": get_all_animals
+    },
+    "customers": {
+        "single": get_single_customer,
+        "all": get_all_customers
+    },
+    "employees": {
+        "single": get_single_employee,
+        "all": get_all_employees
+    },
+    "locations": {
+        "single": get_single_location,
+        "all": get_all_locations
+    },
+}
+
 class HandleRequests(BaseHTTPRequestHandler):
     """Controls the functionality of any GET, PUT, POST, DELETE requests to the server
     """
@@ -33,50 +53,27 @@ class HandleRequests(BaseHTTPRequestHandler):
 
         return (resource, id)
 
+    def get_all_or_single(self, resource, id):
+        if id is not None:
+            response = method_mapper[resource]["single"](id)
+
+            if response is not None:
+                self._set_headers(200)
+            else:
+                self._set_headers(404)
+                response = { "message": f"{id} can not be found.  Please enter a valid resource id." }
+        else:
+            self._set_headers(200)
+            response = method_mapper[resource]["all"]()
+
+        return response
+
     def do_GET(self):
         """Handles GET requests to the server
         """
-        response = {} 
-
-        # Parse the URL and capture the tuple that is returned
+        response = None
         (resource, id) = self.parse_url(self.path)
-
-        if resource == "animals":
-            if id is not None:
-                response = get_single_animal(id)
-
-            else:
-                response = get_all_animals()
-
-        if resource == "locations":
-            if id is not None:
-                response = get_single_location(id)
-
-            else:
-                response = get_all_locations()
-
-        if resource == "employees":
-            if id is not None:
-                response = get_single_employee(id)
-
-            else:
-                response = get_all_employees()
-
-        if resource == "customers":
-            if id is not None:
-                response = get_single_customer(id)
-
-            else:
-                response = get_all_customers()
-
-        # Set status code to 200 OK if response is valid
-        if response:
-            self._set_headers(200)
-        # Set status code to 404 - Not Found if the client requests a nonexistent resource
-        else:
-            self._set_headers(404)
-            response = { "message": f"{id} can not be found.  Please enter a valid resource id." }
-
+        response = self.get_all_or_single(resource, id)
         self.wfile.write(json.dumps(response).encode())
 
     def do_POST(self):

@@ -54,6 +54,15 @@ class HandleRequests(BaseHTTPRequestHandler):
         return (resource, id)
 
     def get_all_or_single(self, resource, id):
+        """Returns a single matching resource dictionary or an entire resource list
+
+        Args:
+            resource (string): The resource to be accessed
+            id (int): The primary key of the requested resource dictionary
+
+        Returns:
+            dict: The matching resource dictionary
+        """
         if id is not None:
             response = method_mapper[resource]["single"](id)
 

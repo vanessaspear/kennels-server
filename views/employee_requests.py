@@ -1,23 +1,33 @@
-EMPLOYEES = [
-    {
-        "id": 1,
-        "name": "Fumio Kishida"
-    },
-    {
-        "id": 2,
-        "name": "Tsai Ing-wen"
-    },
-    {
-        "id": 3,
-        "name": "Xi Jinping"
-    }
-]
+import sqlite3
+from models import Employee
 
 def get_all_employees():
     """Returns all employee dictionaries"""
-    return EMPLOYEES
+    with sqlite3.connect("./kennel.sqlite3") as conn:
 
-# Function with a single parameter
+        conn.row_factory = sqlite3.Row
+        db_cursor = conn.cursor()
+
+        db_cursor.execute("""
+        SELECT
+            e.id,
+            e.name, 
+            e.address, 
+            e.location_id
+        FROM employee e
+        """)
+
+        employees = []
+
+        dataset = db_cursor.fetchall()
+
+        for row in dataset:
+            employee = Employee(row['id'], row['name'], row['address'], row['location_id'])
+
+            employees.append(employee.__dict__)
+
+    return employees
+
 def get_single_employee(id):
     """Finds the matching employee dictionary for the specified employee id
 
@@ -27,18 +37,27 @@ def get_single_employee(id):
     Returns:
         object: employee dictionary
     """
-    # Variable to hold the found employee, if it exists
-    requested_employee = None
+    with sqlite3.connect("./kennel.sqlite3") as conn:
+        conn.row_factory = sqlite3.Row
+        db_cursor = conn.cursor()
 
-    # Iterate the EMPLOYEES list above. Very similar to the
-    # for..of loops you used in JavaScript.
-    for employee in EMPLOYEES:
-        # Dictionaries in Python use [] notation to find a key
-        # instead of the dot notation that JavaScript used.
-        if employee["id"] == id:
-            requested_employee = employee
+        db_cursor.execute("""
+        SELECT
+            e.id,
+            e.name,
+            e.address,
+            e.location_id
+        FROM employee e
+        WHERE e.id = ?
+        """, ( id, ))
 
-    return requested_employee
+        # Load the single result into memory
+        data = db_cursor.fetchone()
+
+        # Create an employee instance from the current row
+        employee = Employee(data['id'], data['name'], data['address'], data['location_id'])
+
+    return employee.__dict__
 
 def create_employee(employee):
     """Adds a new employee dictionary

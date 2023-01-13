@@ -1,21 +1,31 @@
-CUSTOMERS = [
-    {
-        "id": 1,
-        "name": "Halimah Yacob"
-    },
-    {
-        "id": 2,
-        "name": "Mahathir Mohamad"
-    },
-    {
-        "id": 3,
-        "name": "Prayut Chan-o-cha"
-    }
-]
+import sqlite3
+from models import Customer
 
 def get_all_customers():
     """Returns all customer dictionaries"""
-    return CUSTOMERS
+
+    with sqlite3.connect("./kennel.sqlite3") as conn:
+
+        conn.row_factory = sqlite3.Row
+        db_cursor = conn.cursor()
+
+        db_cursor.execute("""
+        SELECT
+            c.id,
+            c.name
+        FROM customer c
+        """)
+
+        customers = []
+
+        dataset = db_cursor.fetchall()
+
+        for row in dataset:
+            customer = Customer(row['id'], row['name'])
+
+            customers.append(customer.__dict__)
+
+    return customers
 
 # Function with a single parameter
 def get_single_customer(id):
@@ -27,18 +37,25 @@ def get_single_customer(id):
     Returns:
         object: customer dictionary
     """
-    # Variable to hold the found customer, if it exists
-    requested_customer = None
+    with sqlite3.connect("./kennel.sqlite3") as conn:
+        conn.row_factory = sqlite3.Row
+        db_cursor = conn.cursor()
 
-    # Iterate the CUSTOMERS list above. Very similar to the
-    # for..of loops you used in JavaScript.
-    for customer in CUSTOMERS:
-        # Dictionaries in Python use [] notation to find a key
-        # instead of the dot notation that JavaScript used.
-        if customer["id"] == id:
-            requested_customer = customer
+        db_cursor.execute("""
+        SELECT
+            c.id,
+            c.name
+        FROM customer c
+        WHERE c.id = ?
+        """, ( id, ))
 
-    return requested_customer
+        # Load the single result into memory
+        data = db_cursor.fetchone()
+
+        # Create an customer instance from the current row
+        customer = Customer(data['id'], data['name'])
+
+        return customer.__dict__
 
 def create_customer(customer):
     """Adds a new customer dictionary

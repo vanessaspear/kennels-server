@@ -1,9 +1,10 @@
 import json
+from urllib.parse import urlparse, parse_qs
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from views import get_all_animals, get_single_animal, create_animal, delete_animal, update_animal
+from views import get_all_animals, get_single_animal, create_animal, delete_animal, update_animal, get_animals_by_location, get_animals_by_status
 from views import get_all_locations, get_single_location, create_location, delete_location, update_location
-from views import get_all_employees, get_single_employee, create_employee, delete_employee, update_employee
-from views import get_all_customers, get_single_customer, create_customer, update_customer
+from views import get_all_employees, get_single_employee, create_employee, delete_employee, update_employee, get_employees_by_location
+from views import get_all_customers, get_single_customer, create_customer, update_customer, get_customer_by_email
 from views import verify_data
 
 # Method mapper for all resources
@@ -31,27 +32,21 @@ class HandleRequests(BaseHTTPRequestHandler):
     """
 
     def parse_url(self, path):
-        """Splits URL to determine if a client requested an entire resource or a single dictionary
-
-        Args:
-            path (string): URL to specific resource needed
-
-        Returns:
-            tuple: (resource, id)
-        """
-
-        path_params = path.split("/")
+        """Parse the url into the resource and id"""
+        parsed_url = urlparse(path)
+        path_params = parsed_url.path.split('/')  # ['', 'animals', 1]
         resource = path_params[1]
-        id = None
 
+        if parsed_url.query:
+            query = parse_qs(parsed_url.query)
+            return (resource, query)
+
+        pk = None
         try:
-            id = int(path_params[2])
-        except IndexError:
+            pk = int(path_params[2])
+        except (IndexError, ValueError):
             pass
-        except ValueError:
-            pass
-
-        return (resource, id)
+        return (resource, pk)
 
     def get_all_or_single(self, resource, id):
         """Returns a single matching resource dictionary or an entire resource list
@@ -80,9 +75,28 @@ class HandleRequests(BaseHTTPRequestHandler):
     def do_GET(self):
         """Handles GET requests to the server
         """
-        response = None
-        (resource, id) = self.parse_url(self.path)
-        response = self.get_all_or_single(resource, id)
+        response = {}
+
+        parsed = self.parse_url(self.path)
+
+        if '?' not in self.path: 
+            (resource, id) = parsed
+            response = self.get_all_or_single(resource, id)
+        else:
+            (resource, query) = parsed
+            self._set_headers(200)
+            if query.get('email') and resource == 'customers':
+                response = get_customer_by_email(query['email'][0])
+
+            if query.get('location_id') and resource == 'animals':
+                response = get_animals_by_location(query['location_id'][0])
+
+            if query.get('status') and resource == 'animals':
+                response = get_animals_by_status(query['status'][0])
+
+            if query.get('location_id') and resource == 'employees':
+                response = get_employees_by_location(query['location_id'][0])    
+        
         self.wfile.write(json.dumps(response).encode())
 
     def do_POST(self):

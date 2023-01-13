@@ -1,6 +1,39 @@
 import sqlite3
 from models import Employee
 
+def get_employees_by_location(location):
+    """Gets the employees at a specific location
+
+    Arguments: 
+        int: The location foreign key 
+
+    Returns: 
+        list: List of employee dictionaries
+    """
+    with sqlite3.connect("./kennel.sqlite3") as conn:
+        conn.row_factory = sqlite3.Row
+        db_cursor = conn.cursor()
+
+        # Write the SQL query to get the information you want
+        db_cursor.execute("""
+        select
+            e.id,
+            e.name, 
+            e.address, 
+            e.location_id
+        FROM employee e
+        WHERE e.location_id = ?
+        """, ( location, ))
+
+        employees = []
+        dataset = db_cursor.fetchall()
+
+        for row in dataset:
+            employee = Employee(row['id'], row['name'], row['address'], row['location_id'])
+            employees.append(employee.__dict__)
+
+    return employees
+
 def get_all_employees():
     """Returns all employee dictionaries"""
     with sqlite3.connect("./kennel.sqlite3") as conn:

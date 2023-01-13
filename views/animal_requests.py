@@ -1,6 +1,76 @@
 import sqlite3
 from models import Animal
 
+def get_animals_by_location(location):
+    """Gets the animals at a specific location
+
+    Arguments: 
+        int: The location foreign key 
+
+    Returns: 
+        list: List of animal dictionaries
+    """
+    with sqlite3.connect("./kennel.sqlite3") as conn:
+        conn.row_factory = sqlite3.Row
+        db_cursor = conn.cursor()
+
+        # Write the SQL query to get the information you want
+        db_cursor.execute("""
+        select
+            a.id,
+            a.name,
+            a.breed,
+            a.status,
+            a.location_id,
+            a.customer_id
+        FROM animal a
+        WHERE a.location_id = ?
+        """, ( location, ))
+
+        animals = []
+        dataset = db_cursor.fetchall()
+
+        for row in dataset:
+            animal = Animal(row['id'], row['name'], row['breed'], row['status'] , row['location_id'], row['customer_id'])
+            animals.append(animal.__dict__)
+
+    return animals
+
+def get_animals_by_status(status):
+    """Gets the animals at a specific status
+
+    Arguments: 
+        int: The status foreign key 
+
+    Returns: 
+        list: List of animal dictionaries
+    """
+    with sqlite3.connect("./kennel.sqlite3") as conn:
+        conn.row_factory = sqlite3.Row
+        db_cursor = conn.cursor()
+
+        # Write the SQL query to get the information you want
+        db_cursor.execute("""
+        select
+            a.id,
+            a.name,
+            a.breed,
+            a.status,
+            a.location_id,
+            a.customer_id
+        FROM animal a
+        WHERE a.status = ?
+        """, ( status, ))
+
+        animals = []
+        dataset = db_cursor.fetchall()
+
+        for row in dataset:
+            animal = Animal(row['id'], row['name'], row['breed'], row['status'] , row['location_id'], row['customer_id'])
+            animals.append(animal.__dict__)
+
+    return animals
+
 def get_all_animals():
     """Gets all animals
     Returns:

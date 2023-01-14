@@ -59,3 +59,11 @@ INSERT INTO `Animal` VALUES (null, "Daps", "Kennel", "Boxer", 2, 2);
 INSERT INTO `Animal` VALUES (null, "Cleo", "Kennel", "Poodle", 2, 2);
 INSERT INTO `Animal` VALUES (null, "Popcorn", "Kennel", "Beagle", 3, 2);
 INSERT INTO `Animal` VALUES (null, "Curly", "Treatment", "Poodle", 4, 2);
+
+INSERT INTO `Animal` VALUES (null, "Daps", "Kennel", "Boxer", 2, 2);
+
+INSERT INTO `Animal` VALUES (null, "Bruno", "Recreation", "Chihuahua", 1, 2);
+
+SELECT * FROM `Animal` ORDER BY id DESC;
+
+UPDATE `Animal` SET location_id = 1 WHERE id = 11;

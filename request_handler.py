@@ -105,109 +105,50 @@ class HandleRequests(BaseHTTPRequestHandler):
         self._set_headers(201)
         content_len = int(self.headers.get('content-length', 0))
         post_body = self.rfile.read(content_len)
-
-        # Convert JSON string to a Python dictionary
         post_body = json.loads(post_body)
 
-        # Parse the URL
         (resource, id) = self.parse_url(self.path)
 
+        # Initialize new resource
+        new_resource = None
+
+        # Add a new animal to the list
         if resource == "animals":
-            # Verify post properties match resource properties
-            verified_data = verify_data(resource, post_body)
-            
-            if verified_data is True:
-                # Initialize new animal
-                new_animal = None
-                new_animal = create_animal(post_body)
+            new_resource = create_animal(post_body)
+        elif resource == "customers":
+            new_resource = create_customer(post_body)
+        elif resource == "locations":
+            new_resource = create_location(post_body)
+        elif resource == "employees":
+            new_resource = create_employee(post_body)
 
-                # Encode the new animal and send in response
-                self.wfile.write(json.dumps(new_animal).encode())
-            else:
-                self._set_headers(400)
-                # Encode the new animal and send in response
-                self.wfile.write(json.dumps(verified_data).encode())
-
-        #Add a new location to the list
-        if resource == "locations":
-            # Verify post properties match resource properties
-            verified_data = verify_data(resource, post_body)
-
-            if verified_data is True:
-                # Initialize new location
-                new_location = None
-                new_location = create_location(post_body)
-
-                # Encode the new location and send in response
-                self.wfile.write(json.dumps(new_location).encode())
-            else: 
-                self._set_headers(400)
-                # Encode the new location and send in response
-                self.wfile.write(json.dumps(verified_data).encode())
-
-        #Add a new employee to the list
-        if resource == "employees":
-            # Verify post properties match resource properties
-            verified_data = verify_data(resource, post_body)
-            
-            if verified_data is True:
-                # Initialize new employee
-                new_employee = None
-                new_employee = create_employee(post_body)
-
-                # Encode the new employee and send in response
-                self.wfile.write(json.dumps(new_employee).encode())
-            else:
-                self._set_headers(400)
-                # Encode the new employee and send in response
-                self.wfile.write(json.dumps(verified_data).encode())
-
-        #Add a new customer to the list
-        if resource == "customers":
-            # Verify post properties match resource properties
-            verified_data = verify_data(resource, post_body)
-            
-            if verified_data is True:
-                # Initialize new customer
-                new_customer = None
-                new_customer = create_customer(post_body)
-
-                # Encode the new customer and send in response
-                self.wfile.write(json.dumps(new_customer).encode())
-            else: 
-                self._set_headers(400)
-                # Encode the new customer and send in response
-                self.wfile.write(json.dumps(verified_data).encode())
+        # Encode the new resource and send in response
+        self.wfile.write(f"{new_resource}".encode())
 
     def do_PUT(self):
         """Handles PUT requests to the server
         """
-        self._set_headers(204)
         content_len = int(self.headers.get('content-length', 0))
         post_body = self.rfile.read(content_len)
         post_body = json.loads(post_body)
 
-        # Parse the URL
         (resource, id) = self.parse_url(self.path)
 
-        # Delete a single animal from the list
+        success = False
+
         if resource == "animals":
-            update_animal(id, post_body)
-        
-        # Delete a single location from the list
-        if resource == "locations":
-            update_location(id, post_body)
-
-        # Delete a single employee from the list
-        if resource == "employees":
-            update_employee(id, post_body)
-
-        # Delete a single customer from the list
-        if resource == "customers":
-            update_customer(id, post_body)
-
-        # Encode the new animal and send in response
-        self.wfile.write("".encode())
+            success = update_animal(id, post_body)
+        elif resource == "locations":
+            success = update_location(id, post_body)
+        elif resource == "employees":
+            success = update_employee(id, post_body)
+        elif resource == "customers":
+            success = update_customer(id, post_body)
+       
+        if success:
+            self._set_headers(204)
+        else:
+            self._set_headers(404)
 
     def _set_headers(self, status):
         """Sets the status code, Content-Type and Access-Control-Allow-Origin

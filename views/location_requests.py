@@ -56,30 +56,6 @@ def get_single_location(id):
         location = Location(data['id'], data['name'], data['address'])
 
     return location.__dict__
-    
-def create_location(location):
-    """Adds a new location dictionary
-
-    Args:
-        location (dictionary): Information about the location
-
-    Returns:
-        dictionary: Returns the location dictionary with a LOCATION id
-    """
-    # Get the id value of the last location in the list
-    max_id = LOCATIONS[-1]["id"]
-
-    # Add 1 to whatever that number is
-    new_id = max_id + 1
-
-    # Add an `id` property to the location dictionary
-    location["id"] = new_id
-
-    # Add the location dictionary to the list
-    LOCATIONS.append(location)
-
-    # Return the dictionary with `id` property added
-    return location
 
 def delete_location(id):
     """Deletes a single location
@@ -102,11 +78,23 @@ def update_location(id, new_location):
         id (int): Location id
         new_location (dictionary): Replacement location dictionary
     """
-    # Iterate the LOCATIONS list, but use enumerate() so that
-    # you can access the index value of each item.
-    for index, location in enumerate(LOCATIONS):
-        if location["id"] == id:
-            # Found the location. Update the value.
-            LOCATIONS[index] = new_location
-            break
+    with sqlite3.connect("./kennel.sqlite3") as conn:
+        db_cursor = conn.cursor()
+
+        db_cursor.execute("""
+        UPDATE Location
+            SET
+                name = ?,
+                address = ?
+        WHERE id = ?
+        """, (new_location['name'], new_location['address'], id, ))
+
+        rows_affected = db_cursor.rowcount
+
+    if rows_affected == 0:
+        # Forces 404 response by main module
+        return False
+    else:
+        # Forces 204 response by main module
+        return True
         

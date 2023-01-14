@@ -1,5 +1,5 @@
 import sqlite3
-from models import Employee
+from models import Employee, Location
 
 def get_employees_by_location(location):
     """Gets the employees at a specific location
@@ -46,8 +46,13 @@ def get_all_employees():
             e.id,
             e.name, 
             e.address, 
-            e.location_id
+            e.location_id,
+            l.id location_id,
+            l.name location_name,
+            l.address location_address
         FROM employee e
+        JOIN location l
+            ON l.id = e.location_id
         """)
 
         employees = []
@@ -56,6 +61,10 @@ def get_all_employees():
 
         for row in dataset:
             employee = Employee(row['id'], row['name'], row['address'], row['location_id'])
+
+            location = Location(row['location_id'], row['location_name'], row['location_address'])
+
+            employee.location = location.__dict__
 
             employees.append(employee.__dict__)
 
@@ -79,8 +88,13 @@ def get_single_employee(id):
             e.id,
             e.name,
             e.address,
-            e.location_id
+            e.location_id,
+            l.id location_id,
+            l.name location_name,
+            l.address location_address
         FROM employee e
+        JOIN location l
+            ON l.id = e.location_id
         WHERE e.id = ?
         """, ( id, ))
 
@@ -90,31 +104,11 @@ def get_single_employee(id):
         # Create an employee instance from the current row
         employee = Employee(data['id'], data['name'], data['address'], data['location_id'])
 
+        location = Location(data['location_id'], data['location_name'], data['location_address'])
+
+        employee.location = location.__dict__
+
     return employee.__dict__
-
-def create_employee(employee):
-    """Adds a new employee dictionary
-
-    Args:
-        employee (dictionary): Information about the employee
-
-    Returns:
-        dictionary: Returns the employee dictionary with an EMPLOYEE id
-    """
-    # Get the id value of the last employee in the list
-    max_id = EMPLOYEES[-1]["id"]
-
-    # Add 1 to whatever that number is
-    new_id = max_id + 1
-
-    # Add an `id` property to the employee dictionary
-    employee["id"] = new_id
-
-    # Add the employee dictionary to the list
-    EMPLOYEES.append(employee)
-
-    # Return the dictionary with `id` property added
-    return employee
 
 def delete_employee(id):
     """Deletes a single employee
@@ -137,11 +131,24 @@ def update_employee(id, new_employee):
         id (int): Employee id
         new_employee (dictionary): Replacement employee dictionary
     """
-    # Iterate the EMPLOYEES list, but use enumerate() so that
-    # you can access the index value of each item.
-    for index, employee in enumerate(EMPLOYEES):
-        if employee["id"] == id:
-            # Found the employee. Update the value.
-            EMPLOYEES[index] = new_employee
-            break
+    with sqlite3.connect("./kennel.sqlite3") as conn:
+        db_cursor = conn.cursor()
+
+        db_cursor.execute("""
+        UPDATE Employee
+            SET
+                name = ?,
+                address = ?,
+                location_id = ?,
+        WHERE id = ?
+        """, (new_employee['name'], new_employee['address'], new_employee['location_id'], id, ))
+
+        rows_affected = db_cursor.rowcount
+
+    if rows_affected == 0:
+        # Forces 404 response by main module
+        return False
+    else:
+        # Forces 204 response by main module
+        return True
         

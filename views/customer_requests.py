@@ -89,30 +89,6 @@ def get_single_customer(id):
 
         return customer.__dict__
 
-def create_customer(customer):
-    """Adds a new customer dictionary
-
-    Args:
-        customer (dictionary): Information about the customer
-
-    Returns:
-        dictionary: Returns the customer dictionary with an CUSTOMER id
-    """
-    # Get the id value of the last customer in the list
-    max_id = CUSTOMERS[-1]["id"]
-
-    # Add 1 to whatever that number is
-    new_id = max_id + 1
-
-    # Add an `id` property to the customer dictionary
-    customer["id"] = new_id
-
-    # Add the customer dictionary to the list
-    CUSTOMERS.append(customer)
-
-    # Return the dictionary with `id` property added
-    return customer
-
 def delete_customer(id):
     """Deletes a single customer
 
@@ -134,11 +110,26 @@ def update_customer(id, new_customer):
         id (int): Customer id
         new_customer (dictionary): Replacement customer dictionary
     """
-    # Iterate the CUSTOMERS list, but use enumerate() so that
-    # you can access the index value of each item.
-    for index, customer in enumerate(CUSTOMERS):
-        if customer["id"] == id:
-            # Found the customer. Update the value.
-            CUSTOMERS[index] = new_customer
-            break
+    with sqlite3.connect("./kennel.sqlite3") as conn:
+            db_cursor = conn.cursor()
+
+            db_cursor.execute("""
+            UPDATE Customer
+                SET
+                    name = ?,
+                    address = ?,
+                    email = ?,
+                    password = ?
+            WHERE id = ?
+            """, (new_customer['name'], new_customer['address'],
+                new_customer['email'], new_customer['password'], id, ))
+
+            rows_affected = db_cursor.rowcount
+
+    if rows_affected == 0:
+        # Forces 404 response by main module
+        return False
+    else:
+        # Forces 204 response by main module
+        return True
         
